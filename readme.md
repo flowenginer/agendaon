@@ -1,6 +1,6 @@
-# Vava BarberShop - Sistema de Agendamento
+# Clinica Estetica - Sistema de Agendamento
 
-Este projeto consiste em um sistema de agendamento para a Vava BarberShop, com páginas para agendamento de serviços e consulta de agendamentos existentes.
+Este projeto consiste em um sistema de agendamento para a Clinica de Estética, com páginas para agendamento de serviços e consulta de agendamentos existentes.
 
 ## Estrutura do Projeto
 
