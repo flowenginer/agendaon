@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Pele Estética - Cuidando melhor de você!</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Inicialização do cliente Supabase - MOVIDO PARA O TOPO
+        const supabaseUrl = 'https://flvkbiwftlonwlzextmx.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsdmtiaXdmdGxvbndsemV4dG14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyNDMyNzQsImV4cCI6MjA2NDgxOTI3NH0.owDvN4PQX9MAX2OHlbBgupsF7W5Whom7v4qDqDwzFj4';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Animations */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Custom Styles */
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .option-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            margin-bottom: 1rem;
+            background-color: #e0f2fe;
+            color: #0284c7;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover .option-icon {
+            background-color: #0284c7;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .main-content {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .bg-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230ea5e9' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-secondary-800">
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-sm relative overflow-hidden">
+        <!-- Background Pattern -->
+        <div class="bg-pattern absolute inset-0 opacity-50"></div>
+        
+        <!-- Content -->
+        <div class="relative z-10">
+            <!-- Header -->
+            <header>
+                <div class="p-6 pb-8 bg-gradient-to-r from-primary-700 to-primary-800 text-white relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-20"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-center space-x-4 mb-6">
+                            <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
+                                <img src="https://flvkbiwftlonwlzextmx.supabase.co/storage/v1/object/public/profile-photos//ChatGPT%20Image%209%20de%20jun.%20de%202025,%2012_41_57.png?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=128&h=128&q=80" alt="Nova Pele Estética" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <h1 class="text-3xl font-bold mb-2">Nova Pele Estética</h1>
+                            <p class="text-lg opacity-90">Cuidando melhor de você</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="px-6 py-8 main-content">
+                <div class="mb-8 text-center">
+                    <h2 class="text-2xl font-bold mb-3">Bem-vindo!</h2>
+                    <p class="text-secondary-500">O que você deseja fazer hoje?</p>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-6 max-w-sm mx-auto">
+                    <!-- Agendar Option -->
+                    <a href="agendamento.html" class="block p-6 bg-white rounded-xl border-2 border-gray-100 text-center card-shadow card-hover">
+                        <div class="option-icon mx-auto">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Agendar</h3>
+                        <p class="text-secondary-500">Marque um horário para seu atendimento</p>
+                    </a>
+                    
+                    <!-- Consultar Agenda Option -->
+                    <a href="consultar.html" class="block p-6 bg-white rounded-xl border-2 border-gray-100 text-center card-shadow card-hover">
+                        <div class="option-icon mx-auto">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Consultar Agenda</h3>
+                        <p class="text-secondary-500">Verifique ou altere seus agendamentos</p>
+                    </a>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="p-6 text-center text-secondary-400 text-sm border-t border-gray-100 mt-auto">
+                <p class="mb-2">© 2025 Nova Pele Estética. Todos os direitos reservados.</p>
+                <p class="space-x-3">
+                    <a href="#" class="text-primary-600 hover:text-primary-700">Termos de uso</a>
+                    <span>•</span>
+                    <a href="#" class="text-primary-600 hover:text-primary-700">Política de privacidade</a>
+                </p>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>
+

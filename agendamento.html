@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Pele Estética - Agendamento Online</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Inicialização do cliente Supabase - MOVIDO PARA O TOPO
+        const supabaseUrl = 'https://flvkbiwftlonwlzextmx.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsdmtiaXdmdGxvbndsemV4dG14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyNDMyNzQsImV4cCI6MjA2NDgxOTI3NH0.owDvN4PQX9MAX2OHlbBgupsF7W5Whom7v4qDqDwzFj4';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+       // (opcional) torne-a acessível globalmente
+        window.supabaseClient = supabaseClient;
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Animations */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom Styles */
+        .service-selected {
+            border: 2px solid #0ea5e9;
+            background-color: #f0f9ff;
+            transform: scale(0.98);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .time-selected,
+        .date-selected,
+        .barber-selected,
+        .service-selected {
+            background-color: #0284c7 !important;
+            color: white !important;
+            border-color: #0284c7 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+
+        }
+
+        .service-selected .price-display {
+            background-color: white !important;
+            color: #0284c7 !important;
+        }
+
+        .time-selected *:not(i),
+        .date-selected *:not(i),
+        .barber-selected *:not(i),
+        .service-selected *:not(i) {
+            color: white !important;
+        }
+
+
+        .scrolling-wrapper {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .scrolling-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0ea5e9;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        .step {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .service-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            margin-right: 12px;
+            background-color: #e0f2fe;
+            color: #0ea5e9;
+        }
+
+        .card-hover {
+            transition: all 0.2s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .price-display {
+            font-weight: 700;
+            background-color: #f8fafc;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: #0ea5e9;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #0ea5e9;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-secondary-800">
+    <div class="max-w-lg mx-auto bg-white min-h-screen shadow-sm">
+        <!-- Header with progress bar -->
+        <header class="relative">
+            <div class="p-6 pb-4 bg-gradient-to-r from-primary-700 to-primary-800 text-white relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-20"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <a href="index.html" class="w-14 h-14 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
+                            <img src="https://flvkbiwftlonwlzextmx.supabase.co/storage/v1/object/public/profile-photos//ChatGPT%20Image%209%20de%20jun.%20de%202025,%2012_41_57.png?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=128&h=128&q=80" alt="Nova Pele Estética" class="w-full h-full object-cover">
+                        </a>
+                        <div>
+                            <h1 class="text-2xl font-bold">Nova Pele Estética</h1>
+                            <p class="text-sm opacity-90">Cuidando melhor de você!</p>
+                        </div>
+                    </div>
+                    <div class="text-white text-sm">
+                        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                            <i class="fas fa-ellipsis-v text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar mx-6 mb-6">
+                <div class="progress-fill" id="progressBar" style="width: 20%"></div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="px-6 pb-6">
+            <!-- Step 1: Services -->
+            <div id="step1" class="step active">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-2">Escolha seu serviço</h2>
+                    <p class="text-secondary-500">Selecione o serviço desejado para continuar</p>
+                </div>
+                
+                <div class="space-y-4 mb-8" id="services-container">
+                    <!-- Os serviços serão carregados dinamicamente do Supabase -->
+                    <div class="flex justify-center items-center py-8">
+                        <div class="loader"></div>
+                        <span class="ml-3 text-secondary-500">Carregando serviços...</span>
+                    </div>
+                </div>
+                
+                <button id="nextStep1" class="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md" disabled>
+                    Continuar <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+
+            <!-- Step 2: Date Selection -->
+            <div id="step2" class="step hidden">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-2">Escolha a data</h2>
+                    <p class="text-secondary-500">Selecione um dia disponível para seu atendimento</p>
+                </div>
+                
+                <div class="mb-8">
+                    <div class="mb-6">
+                        <h3 class="font-semibold mb-3 text-secondary-700" id="month-year-display">Carregando datas...</h3>
+                        <div class="scrolling-wrapper mb-2 py-1">
+                            <div class="flex space-x-2" id="dates-container">
+                                <!-- As datas serão carregadas dinamicamente -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h3 class="font-semibold mb-3 text-secondary-700">Escolha uma Profissional</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="barbers-container">
+                            <!-- Os barbeiros serão carregados dinamicamente do Supabase -->
+                            <div class="flex justify-center items-center py-4">
+                                <div class="loader"></div>
+                                <span class="ml-3 text-secondary-500">Carregando profissionais...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <button id="nextStep2" class="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md" disabled>
+                        Continuar <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button class="back-step w-full py-3 bg-white hover:bg-gray-50 text-secondary-700 border border-gray-200 rounded-xl font-semibold transition duration-200 shadow-sm">
+                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Time Selection -->
+            <div id="step3" class="step hidden">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-2">Escolha o horário</h2>
+                    <p class="text-secondary-500" id="selected-date-time">Selecione um horário disponível</p>
+                </div>
+                
+                <div class="mb-8">
+                    <div class="grid grid-cols-3 gap-3" id="times-container">
+                        <!-- Os horários serão carregados dinamicamente -->
+                        <div class="flex justify-center items-center py-8 col-span-3">
+                            <div class="loader"></div>
+                            <span class="ml-3 text-secondary-500">Carregando horários...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <button id="nextStep3" class="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md" disabled>
+                        Continuar <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button class="back-step w-full py-3 bg-white hover:bg-gray-50 text-secondary-700 border border-gray-200 rounded-xl font-semibold transition duration-200 shadow-sm">
+                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Confirmation -->
+            <div id="step4" class="step hidden">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-2">Confirme seu agendamento</h2>
+                    <p class="text-secondary-500">Revise os detalhes e informe seus dados</p>
+                </div>
+                
+                <div class="bg-gray-50 p-5 rounded-xl mb-6 border border-gray-100 shadow-sm">
+                    <div class="flex justify-between py-3 border-b border-gray-200 items-center">
+                        <div class="text-secondary-500 flex items-center">
+                            <i class="fas fa-cut mr-2"></i> Serviço:
+                        </div>
+                        <div class="font-medium text-right" id="confirm-service">Carregando...</div>
+                    </div>
+                    <div class="flex justify-between py-3 border-b border-gray-200 items-center">
+                        <div class="text-secondary-500 flex items-center">
+                            <i class="fas fa-user mr-2"></i> Esteticista:
+                        </div>
+                        <div class="font-medium" id="confirm-barber">Carregando...</div>
+                    </div>
+                    <div class="flex justify-between py-3 border-b border-gray-200 items-center">
+                        <div class="text-secondary-500 flex items-center">
+                            <i class="far fa-calendar mr-2"></i> Data:
+                        </div>
+                        <div class="font-medium" id="confirm-date">Carregando...</div>
+                    </div>
+                    <div class="flex justify-between py-3 items-center">
+                        <div class="text-secondary-500 flex items-center">
+                            <i class="far fa-clock mr-2"></i> Horário:
+                        </div>
+                        <div class="font-medium" id="confirm-time">Carregando...</div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="font-semibold mb-3 text-secondary-700">Seus dados</h3>
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <label for="client-name" class="block text-sm font-medium text-secondary-500 mb-1">Nome completo</label>
+                            <input type="text" id="client-name" placeholder="Digite seu nome" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-300 transition">
+                        </div>
+                        <div class="relative">
+                            <label for="client-phone" class="block text-sm font-medium text-secondary-500 mb-1">Telefone (WhatsApp)</label>
+                            <input type="tel" id="client-phone" placeholder="(99) 99999-9999" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-300 transition">
+                        </div>
+                        <div class="relative">
+                            <label for="client-email" class="block text-sm font-medium text-secondary-500 mb-1">E-mail</label>
+                            <input type="email" id="client-email" placeholder="seu@email.com" class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-300 transition">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <button id="confirmAppointment" class="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition duration-200 flex items-center justify-center shadow-md">
+                        <span id="confirm-text">Finalizar agendamento</span>
+                        <div id="loading" class="loader hidden"></div>
+                    </button>
+                    <button class="back-step w-full py-3 bg-white hover:bg-gray-50 text-secondary-700 border border-gray-200 rounded-xl font-semibold transition duration-200 shadow-sm">
+                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Success -->
+            <div id="step5" class="step hidden">
+                <div class="text-center py-8">
+                    <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-check text-green-500 text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">Agendamento confirmado!</h2>
+                    <p class="text-secondary-500 mb-8">Seu horário foi reservado com sucesso.</p>
+                    
+                    <div class="bg-gray-50 p-5 rounded-xl mb-8 border border-gray-100 shadow-sm text-left">
+                        <div class="flex justify-between py-3 border-b border-gray-200 items-center">
+                            <div class="text-secondary-500 flex items-center">
+                                <i class="fas fa-cut mr-2"></i> Serviço:
+                            </div>
+                            <div class="font-medium" id="success-service">Carregando...</div>
+                        </div>
+                        <div class="flex justify-between py-3 border-b border-gray-200 items-center">
+                            <div class="text-secondary-500 flex items-center">
+                                <i class="fas fa-user mr-2"></i> Esteticista:
+                            </div>
+                            <div class="font-medium" id="success-barber">Carregando...</div>
+                        </div>
+                        <div class="flex justify-between py-3 border-b border-gray-200 items-center">
+                            <div class="text-secondary-500 flex items-center">
+                                <i class="far fa-calendar mr-2"></i> Data:
+                            </div>
+                            <div class="font-medium" id="success-date">Carregando...</div>
+                        </div>
+                        <div class="flex justify-between py-3 items-center">
+                            <div class="text-secondary-500 flex items-center">
+                                <i class="far fa-clock mr-2"></i> Horário:
+                            </div>
+                            <div class="font-medium" id="success-time">Carregando...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <a href="index.html" class="block w-full py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition duration-200 shadow-md">
+                            <i class="fas fa-home mr-2"></i> Voltar ao início
+                        </a>
+                        <a href="consultar.html" class="block w-full py-3 bg-white hover:bg-gray-50 text-secondary-700 border border-gray-200 rounded-xl font-semibold transition duration-200 shadow-sm">
+                            <i class="fas fa-search mr-2"></i> Consultar agendamentos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="p-6 text-center text-secondary-400 text-sm border-t border-gray-100 mt-auto">
+            <p class="mb-2">© 2025 Nova Pele Estética. Todos os direitos reservados.</p>
+            <p class="space-x-3">
+                <a href="#" class="text-primary-600 hover:text-primary-700">Termos de uso</a>
+                <span>•</span>
+                <a href="#" class="text-primary-600 hover:text-primary-700">Política de privacidade</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const progressBar = document.getElementById('progressBar');
+        const steps = document.querySelectorAll('.step');
+        const nextButtons = {
+            step1: document.getElementById('nextStep1'),
+            step2: document.getElementById('nextStep2'),
+            step3: document.getElementById('nextStep3')
+        };
+        const backButtons = document.querySelectorAll('.back-step');
+        const confirmButton = document.getElementById('confirmAppointment');
+        const loadingSpinner = document.getElementById('loading');
+        const nameInput = document.getElementById('client-name');
+        const phoneInput = document.getElementById('client-phone');
+        const emailInput = document.getElementById('client-email');
+        const confirmText = document.getElementById('confirm-text');
+        
+        // Containers
+        const servicesContainer = document.getElementById('services-container');
+        const barbersContainer = document.getElementById('barbers-container');
+        const datesContainer = document.getElementById('dates-container');
+        const timesContainer = document.getElementById('times-container');
+        
+        // Dados do agendamento
+        let appointmentData = {
+            service_id: null,
+            service_name: null,
+            price: null,
+            profissional_id: null,
+            profissional_name: null,
+            data_agendamento: null,
+            data_formatada: null,
+            dia_semana: null,
+            hora_agendamento: null,
+            cliente_nome: null,
+            cliente_telefone: null,
+            cliente_email: null
+        };
+        
+        // Atualiza a barra de progresso
+        function updateProgressBar(step) {
+            const percentages = [20, 40, 60, 80, 100];
+            progressBar.style.width = `${percentages[step-1]}%`;
+        }
+        
+        // Carregar serviços do Supabase
+        async function loadServices() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('servicos')
+                    .select('*')
+                    .order('nome');
+                
+                if (error) {
+                    console.error('Erro ao carregar serviços:', error);
+                    servicesContainer.innerHTML = `
+                        <div class="p-4 bg-red-50 text-red-600 rounded-lg">
+                            <p>Erro ao carregar serviços. Por favor, tente novamente mais tarde.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (data && data.length > 0) {
+                    servicesContainer.innerHTML = '';
+                    
+                    data.forEach(service => {
+                        const serviceElement = document.createElement('div');
+                        serviceElement.className = 'service-item p-4 border-2 border-gray-100 rounded-xl cursor-pointer transition-all duration-200 card-hover';
+                        serviceElement.dataset.serviceId = service.id;
+                        serviceElement.dataset.serviceName = service.nome;
+                        serviceElement.dataset.servicePrice = service.preco;
+                        
+                        serviceElement.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <div class="service-icon">
+                                        <i class="fas fa-${getServiceIcon(service.nome)} text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold">${service.nome}</h3>
+                                        <p class="text-sm text-secondary-500">${service.duracao_minutos} minutos</p>
+                                    </div>
+                                </div>
+                                <div class="price-display">R$ ${service.preco.toFixed(2).replace('.', ',')}</div>
+                            </div>
+                        `;
+                        
+                        serviceElement.addEventListener('click', () => {
+                            document.querySelectorAll('.service-item').forEach(item => {
+                                item.classList.remove('service-selected');
+                            });
+                            serviceElement.classList.add('service-selected');
+                            
+                            appointmentData.service_id = service.id;
+                            appointmentData.service_name = service.nome;
+                            appointmentData.price = service.preco;
+                            
+                            nextButtons.step1.disabled = false;
+                        });
+                        
+                        servicesContainer.appendChild(serviceElement);
+                    });
+                } else {
+                    servicesContainer.innerHTML = `
+                        <div class="p-4 bg-yellow-50 text-yellow-600 rounded-lg">
+                            <p>Nenhum serviço disponível no momento.</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Erro inesperado ao carregar serviços:', err);
+                servicesContainer.innerHTML = `
+                    <div class="p-4 bg-red-50 text-red-600 rounded-lg">
+                        <p>Erro ao carregar serviços. Por favor, tente novamente mais tarde.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Carregar barbeiros do Supabase
+        async function loadBarbers() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profissionais')
+                    .select('*')
+                    .order('nome');
+                
+                if (error) {
+                    console.error('Erro ao carregar Esteticistas:', error);
+                    barbersContainer.innerHTML = `
+                        <div class="p-4 bg-red-50 text-red-600 rounded-lg col-span-2">
+                            <p>Erro ao carregar Esteticistas. Por favor, tente novamente mais tarde.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (data && data.length > 0) {
+                    barbersContainer.innerHTML = ''; // Remove o loader estático que veio do HTML
+
+                    
+                    data.forEach(barber => {
+                        const barberElement = document.createElement('div');
+                        barberElement.className = 'barber-option border border-gray-100 rounded-lg p-3 cursor-pointer hover:border-primary-300 bg-white card-hover';
+                        barberElement.dataset.barberId = barber.id;
+                        barberElement.dataset.barberName = barber.nome;
+                        
+                        barberElement.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                                    <img src="${barber.photo_url ||
+          `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`}" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <p class="font-medium">${barber.nome}</p>
+                                    <p class="text-xs text-secondary-500">${barber.especialidade || 'Esteticista profissional'}</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        barberElement.addEventListener('click', () => {
+                            document.querySelectorAll('.barber-option').forEach(opt => {
+                                opt.classList.remove('barber-selected');
+                            });
+                            barberElement.classList.add('barber-selected');
+                            
+                            appointmentData.profissional_id = barber.id;
+                            appointmentData.profissional_name = barber.nome;
+                            
+                            checkStep2Completion();
+                        });
+                        
+                        barbersContainer.appendChild(barberElement);
+                    });
+                    
+                    // Adicionar event listeners para seleção de barbeiro
+                    document.querySelectorAll('.barber-option').forEach(option => {
+                        option.addEventListener('click', () => {
+                            document.querySelectorAll('.barber-option').forEach(opt => {
+                                opt.classList.remove('barber-selected');
+                            });
+                            option.classList.add('barber-selected');
+                            
+                            appointmentData.profissional_id = option.dataset.barberId;
+                            appointmentData.profissional_name = option.dataset.barberName;
+                            
+                            checkStep2Completion();
+                        });
+                    });
+                } else {
+                    barbersContainer.innerHTML = `
+                        <div class="p-4 bg-yellow-50 text-yellow-600 rounded-lg col-span-2">
+                            <p>Nenhuma Esteticista disponível no momento.</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Erro inesperado ao carregar Esteticistas:', err);
+                barbersContainer.innerHTML = `
+                    <div class="p-4 bg-red-50 text-red-600 rounded-lg col-span-2">
+                        <p>Erro ao carregar Esteticistas. Por favor, tente novamente mais tarde.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Carregar datas disponíveis
+        function loadDates() {
+            const today = new Date();
+            const datesArray = [];
+            const monthYearElement = document.getElementById('month-year-display');
+            
+            // Mostrar mês e ano atuais
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            monthYearElement.textContent = `${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+            
+            // Gerar próximos 14 dias
+            datesContainer.innerHTML = '';
+            
+            for (let i = 0; i < 14; i++) {
+                const date = new Date();
+                date.setDate(today.getDate() + i);
+                
+                // Pular domingos (0 = domingo)
+                if (date.getDay() === 0) continue;
+                
+                const dayNames = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+                const dayNamesFull = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+                
+                const dateElement = document.createElement('div');
+                dateElement.className = 'date-option flex-shrink-0 w-16 py-3 text-center border border-gray-100 rounded-lg cursor-pointer hover:border-primary-300 bg-white card-hover';
+                
+                // Formatar data para o banco de dados (YYYY-MM-DD)
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+                
+                // Formatar data para exibição (DD/MM/YYYY)
+                const displayDate = `${day}/${month}/${year}`;
+                
+                dateElement.dataset.date = formattedDate;
+                dateElement.dataset.displayDate = displayDate;
+                dateElement.dataset.dayName = dayNamesFull[date.getDay()];
+                
+                dateElement.innerHTML = `
+                    <div class="text-xs text-secondary-400 font-medium">${dayNames[date.getDay()]}</div>
+                    <div class="font-semibold text-secondary-800 mt-1">${date.getDate()}</div>
+                `;
+                
+                dateElement.addEventListener('click', () => {
+                    document.querySelectorAll('.date-option').forEach(opt => {
+                        opt.classList.remove('date-selected');
+                    });
+                    dateElement.classList.add('date-selected');
+                    
+                    appointmentData.data_agendamento = formattedDate;
+                    appointmentData.data_formatada = displayDate;
+                    appointmentData.dia_semana = dayNamesFull[date.getDay()];
+                    
+                    checkStep2Completion();
+                });
+                
+                datesContainer.appendChild(dateElement);
+            }
+        }
+        
+        // Carregar horários disponíveis
+        async function loadTimes() {
+            // Em uma implementação real, você buscaria os horários disponíveis com base na data e barbeiro selecionados
+            // Aqui vamos buscar os horários disponíveis do Supabase
+            
+            timesContainer.innerHTML = `
+                <div class="flex justify-center items-center py-8 col-span-3">
+                    <div class="loader"></div>
+                    <span class="ml-3 text-secondary-500">Verificando horários disponíveis...</span>
+                </div>
+            `;
+            
+            // Atualizar texto com data e barbeiro selecionados
+            document.getElementById('selected-date-time').textContent = 
+                `${appointmentData.dia_semana}, ${appointmentData.data_formatada} - ${appointmentData.profissional_name}`;
+                
+            try {
+                // Aqui você faria uma consulta ao Supabase para verificar os horários já agendados
+                // e mostrar apenas os disponíveis
+                // Por enquanto, vamos mostrar horários fixos
+                
+                const times = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+                
+                // Verificar agendamentos existentes para a data e barbeiro selecionados
+                let query = supabaseClient.from('agendamentos').select('hora_agendamento')
+                    .eq('data_agendamento', appointmentData.data_agendamento)
+                    .eq('status', 'confirmado');
+                    
+                // Se um barbeiro específico foi selecionado, filtrar por ele
+                if (appointmentData.profissional_id !== '0') {
+                    query = query.eq('profissional_id', appointmentData.profissional_id);
+                }
+                
+                const { data: bookedTimes, error } = await query;
+                
+                if (error) {
+                    console.error('Erro ao verificar horários disponíveis:', error);
+                    timesContainer.innerHTML = `
+                        <div class="p-4 bg-red-50 text-red-600 rounded-lg col-span-3">
+                            <p>Erro ao verificar horários disponíveis. Por favor, tente novamente.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Converter os horários agendados para um array
+                const bookedTimesArray = bookedTimes
+  ? bookedTimes.map(item => item.hora_agendamento.slice(0, 5))
+  : [];
+
+                
+                timesContainer.innerHTML = '';
+                
+                times.forEach(time => {
+                    const isAvailable = !bookedTimesArray.includes(time);
+                    if (!isAvailable) return; // Pula horários ocupados
+
+                    const timeElement = document.createElement('div');
+                    timeElement.className = `time-option py-3 border border-gray-200 rounded-lg text-center cursor-pointer hover:border-primary-300 bg-white`;
+                    timeElement.textContent = time;
+                    timeElement.dataset.time = time;
+
+                    timeElement.addEventListener('click', () => {
+                        document.querySelectorAll('.time-option').forEach(opt => {
+                            opt.classList.remove('time-selected');
+                        });
+                        timeElement.classList.add('time-selected');
+
+                        appointmentData.hora_agendamento = time;
+                        nextButtons.step3.disabled = false;
+                    });
+
+                    timesContainer.appendChild(timeElement);
+                });
+
+                
+            } catch (err) {
+                console.error('Erro inesperado ao carregar horários:', err);
+                timesContainer.innerHTML = `
+                    <div class="p-4 bg-red-50 text-red-600 rounded-lg col-span-3">
+                        <p>Erro ao carregar horários. Por favor, tente novamente mais tarde.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function checkStep2Completion() {
+            nextButtons.step2.disabled = !(appointmentData.data_agendamento && appointmentData.profissional_name);
+        }
+        
+        // Função para obter ícone com base no nome do serviço
+        function getServiceIcon(serviceName) {
+            const name = serviceName.toLowerCase();
+            if (name.includes('corte')) return 'cut';
+            if (name.includes('barba')) return 'user';
+            if (name.includes('sobrancelha')) return 'eye';
+            if (name.includes('combo') || name.includes('premium')) return 'gem';
+            return 'scissors';
+        }
+        
+        // Formatação do telefone
+        document.getElementById('client-phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            
+            // Formatação: (00) 00000-0000
+            if (value.length > 2) {
+                value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+            }
+            if (value.length > 10) {
+                value = `${value.substring(0, 10)}-${value.substring(10)}`;
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Mostrar etapa específica
+        function showStep(stepNumber) {
+            steps.forEach((step, index) => {
+                if (index + 1 === stepNumber) {
+                    step.classList.remove('hidden');
+                    step.classList.add('active');
+                } else {
+                    step.classList.add('hidden');
+                    step.classList.remove('active');
+                }
+            });
+            
+            updateProgressBar(stepNumber);
+        }
+        
+        // Event listeners para botões de próxima etapa
+        nextButtons.step1.addEventListener('click', () => {
+            showStep(2);
+            loadBarbers();
+            loadDates();
+        });
+        
+        nextButtons.step2.addEventListener('click', () => {
+            showStep(3);
+            loadTimes();
+        });
+        
+        nextButtons.step3.addEventListener('click', () => {
+            showStep(4);
+            
+            // Atualizar informações de confirmação
+            document.getElementById('confirm-service').textContent = appointmentData.service_name;
+            document.getElementById('confirm-barber').textContent = appointmentData.profissional_name;
+            document.getElementById('confirm-date').textContent = `${appointmentData.dia_semana}, ${appointmentData.data_formatada}`;
+            document.getElementById('confirm-time').textContent = appointmentData.hora_agendamento;
+        });
+        
+        // Event listeners para botões de voltar
+        backButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const currentStep = document.querySelector('.step.active');
+                const currentStepNumber = Array.from(steps).indexOf(currentStep) + 1;
+                
+                if (currentStepNumber > 1) {
+                    showStep(currentStepNumber - 1);
+                }
+            });
+        });
+        
+        // Event listener para botão de confirmar agendamento
+        confirmButton.addEventListener('click', async () => {
+            // Validar dados do cliente
+            const name = nameInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const email = emailInput.value.trim();
+            
+            if (!name) {
+                alert('Por favor, informe seu nome completo.');
+                nameInput.focus();
+                return;
+            }
+            
+            if (!phone || phone.replace(/\D/g, '').length < 10) {
+                alert('Por favor, informe um telefone válido.');
+                phoneInput.focus();
+                return;
+            }
+            
+            if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                alert('Por favor, informe um e-mail válido ou deixe o campo em branco.');
+                emailInput.focus();
+                return;
+            }
+            
+            // Salvar dados do cliente
+            appointmentData.cliente_nome = nameInput.value.trim();
+            appointmentData.cliente_telefone = phoneInput.value.trim();
+            appointmentData.cliente_email = emailInput.value.trim();
+            
+            // Mostrar loading
+            loadingSpinner.classList.remove('hidden');
+            confirmText.textContent = 'Finalizando...';
+            confirmButton.disabled = true;
+            
+            try {
+                // Inserir agendamento no Supabase
+                const { data, error } = await supabaseClient
+                    .from('agendamentos')
+                    .insert([
+                        {
+                            cliente_nome: appointmentData.cliente_nome,
+                            cliente_telefone: appointmentData.cliente_telefone.replace(/\D/g, ''),
+                            email: appointmentData.cliente_email,
+                            servico_id: appointmentData.service_id,
+                            profissional_id: appointmentData.profissional_id === '0' ? null : appointmentData.profissional_id,
+                            data_agendamento: appointmentData.data_agendamento,
+                            hora_agendamento: appointmentData.hora_agendamento,
+                            status: 'confirmado'
+                        }
+                    ]);
+                
+                if (error) {
+                    console.error('Erro ao criar agendamento:', error);
+                    alert('Erro ao criar agendamento. Por favor, tente novamente.');
+                    
+                    // Esconder loading
+                    loadingSpinner.classList.add('hidden');
+                    confirmText.textContent = 'Finalizar agendamento';
+                    confirmButton.disabled = false;
+                    return;
+                }
+                
+                // Atualizar informações na tela de sucesso
+                document.getElementById('success-service').textContent = appointmentData.service_name;
+                document.getElementById('success-barber').textContent = appointmentData.profissional_name;
+                document.getElementById('success-date').textContent = appointmentData.data_formatada;
+                document.getElementById('success-time').textContent = appointmentData.hora_agendamento;
+                
+                // Mostrar tela de sucesso
+                showStep(5);
+                
+            } catch (err) {
+                console.error('Erro inesperado ao criar agendamento:', err);
+                alert('Ocorreu um erro inesperado. Por favor, tente novamente.');
+                
+                // Esconder loading
+                loadingSpinner.classList.add('hidden');
+                confirmText.textContent = 'Finalizar agendamento';
+                confirmButton.disabled = false;
+            }
+        });
+        
+        // Carregar serviços ao iniciar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServices();
+        });
+    </script>
+</body>
+</html>
+
